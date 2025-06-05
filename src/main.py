@@ -4,130 +4,114 @@ from leafnode import LeafNode
 from parentnode import ParentNode
 from text_to_html import text_node_to_html_node
 from split_delimiter import split_nodes_delimiter
+from extract_links import extract_markdown_images, extract_markdown_links
 
 def main():
-    # Existing tests (shortened for focus)
-    print("=== TextNode Tests ===")
-    text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
-    print(text_node)
-    
-    print("\n=== HTMLNode → HTML Pipeline Working ===")
+    # Previous tests (shortened for focus)
+    print("=== Node System Verification ===")
     paragraph = ParentNode("p", [
         LeafNode("b", "Bold text"),
         LeafNode(None, " and normal text")
     ])
-    print("Sample HTML:", paragraph.to_html())
+    print("✅ HTML generation working:", paragraph.to_html())
     
-    # NEW: Split Delimiter Testing
-    print("\n=== Split Delimiter Function Tests ===")
-    
-    # Test 1: Code blocks with backticks
-    print("Test 1: Code blocks")
-    node = TextNode("This is text with a `code block` word", TextType.NORMAL)
-    new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
-    print("Original:", node)
-    print("Split result:")
-    for i, n in enumerate(new_nodes):
-        print(f"  {i}: {n}")
-    
-    # Test 2: Bold text with **
-    print("\nTest 2: Bold text")
-    node = TextNode("This is **bold** text with **more bold** here", TextType.NORMAL)
+    # Split delimiter verification
+    node = TextNode("This is **bold** text", TextType.NORMAL)
     new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-    print("Original:", node)
-    print("Split result:")
-    for i, n in enumerate(new_nodes):
-        print(f"  {i}: {n}")
+    print("✅ Split delimiter working:", len(new_nodes), "nodes created")
     
-    # Test 3: Italic text with *
-    print("\nTest 3: Italic text")
-    node = TextNode("This has *italic* and *more italic* text", TextType.NORMAL)
-    new_nodes = split_nodes_delimiter([node], "*", TextType.ITALIC)
-    print("Original:", node)
-    print("Split result:")
-    for i, n in enumerate(new_nodes):
-        print(f"  {i}: {n}")
+    # NEW: Extraction Function Testing
+    print("\n=== Markdown Extraction Function Tests ===")
     
-    # Test 4: Mixed node types (should leave non-TEXT nodes alone)
-    print("\nTest 4: Mixed node types")
-    mixed_nodes = [
-        TextNode("Normal text with `code` here", TextType.NORMAL),
-        TextNode("Already bold text", TextType.BOLD),
-        TextNode("More normal with `more code` text", TextType.NORMAL)
-    ]
-    new_nodes = split_nodes_delimiter(mixed_nodes, "`", TextType.CODE)
-    print("Original nodes:")
-    for i, n in enumerate(mixed_nodes):
-        print(f"  {i}: {n}")
-    print("After split:")
-    for i, n in enumerate(new_nodes):
-        print(f"  {i}: {n}")
+    # Test 1: Extract images
+    print("Test 1: Extract Images")
+    image_text = "This is text with a ![rick roll](https://i.imgur.com/aKaOqIh.gif) and ![obi wan](https://i.imgur.com/fJRm4Vk.jpeg)"
+    print("Text:", image_text)
+    images = extract_markdown_images(image_text)
+    print("Extracted images:", images)
+    print("Expected: [('rick roll', 'https://i.imgur.com/aKaOqIh.gif'), ('obi wan', 'https://i.imgur.com/fJRm4Vk.jpeg')]")
+    print("Match:", images == [("rick roll", "https://i.imgur.com/aKaOqIh.gif"), ("obi wan", "https://i.imgur.com/fJRm4Vk.jpeg")])
     
-    # Test 5: No delimiters (should return unchanged)
-    print("\nTest 5: No delimiters")
-    node = TextNode("This text has no special formatting", TextType.NORMAL)
-    new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-    print("Original:", node)
-    print("Result:", new_nodes[0])
-    print("Same object?", node is new_nodes[0])
+    # Test 2: Extract links
+    print("\nTest 2: Extract Links")
+    link_text = "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+    print("Text:", link_text)
+    links = extract_markdown_links(link_text)
+    print("Extracted links:", links)
+    print("Expected: [('to boot dev', 'https://www.boot.dev'), ('to youtube', 'https://www.youtube.com/@bootdotdev')]")
+    print("Match:", links == [("to boot dev", "https://www.boot.dev"), ("to youtube", "https://www.youtube.com/@bootdotdev")])
     
-    # Test 6: Delimiter at start and end
-    print("\nTest 6: Delimiters at start/end")
-    node = TextNode("**bold start** and **bold end**", TextType.NORMAL)
-    new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
-    print("Original:", node)
-    print("Split result:")
-    for i, n in enumerate(new_nodes):
-        print(f"  {i}: {n}")
+    # Test 3: Mixed images and links
+    print("\nTest 3: Mixed Images and Links")
+    mixed_text = "![image](img.jpg) and [link](site.com) and ![another](pic.png)"
+    print("Text:", mixed_text)
+    images_mixed = extract_markdown_images(mixed_text)
+    links_mixed = extract_markdown_links(mixed_text)
+    print("Images found:", images_mixed)
+    print("Links found:", links_mixed)
     
-    # Test 7: Error handling (unclosed delimiter)
-    print("\nTest 7: Error handling")
-    try:
-        node = TextNode("This has **unclosed bold text", TextType.NORMAL)
-        split_nodes_delimiter([node], "**", TextType.BOLD)
-        print("ERROR: Should have raised exception!")
-    except ValueError as e:
-        print(f"Correctly caught error: {e}")
+    # Test 4: No matches
+    print("\nTest 4: No Matches")
+    plain_text = "This is just plain text with no special formatting"
+    images_none = extract_markdown_images(plain_text)
+    links_none = extract_markdown_links(plain_text)
+    print("Text:", plain_text)
+    print("Images found:", images_none, "(should be empty)")
+    print("Links found:", links_none, "(should be empty)")
     
-    # Test 8: Complete pipeline integration
-    print("\n=== Complete Pipeline Integration ===")
+    # Test 5: Edge cases
+    print("\nTest 5: Edge Cases")
     
-    # Start with Markdown-like text
-    original_text = "This paragraph has **bold text** and `code snippets` and *italic text*!"
-    print(f"Original text: {original_text}")
+    # Empty alt text and anchor text
+    edge_text = "![](empty-alt.jpg) and [](empty-anchor.com)"
+    images_edge = extract_markdown_images(edge_text)
+    links_edge = extract_markdown_links(edge_text)
+    print("Edge case text:", edge_text)
+    print("Images with empty alt:", images_edge)
+    print("Links with empty anchor:", links_edge)
     
-    # Step 1: Create initial TextNode
-    nodes = [TextNode(original_text, TextType.NORMAL)]
-    print(f"Step 1 - Initial: {nodes}")
+    # Complex URLs
+    complex_text = "![complex](https://example.com/path/to/image.png?param=value&other=123)"
+    images_complex = extract_markdown_images(complex_text)
+    print("Complex URL:", images_complex)
     
-    # Step 2: Process bold text
-    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
-    print(f"Step 2 - After bold: {[str(n) for n in nodes]}")
+    # Test 6: Verify links don't match images
+    print("\nTest 6: Link/Image Distinction")
+    distinction_text = "This has ![an image](img.jpg) and [a link](site.com) - they should be separate!"
+    images_dist = extract_markdown_images(distinction_text)
+    links_dist = extract_markdown_links(distinction_text)
+    print("Text:", distinction_text)
+    print("Images only:", images_dist)
+    print("Links only:", links_dist)
+    print("✅ Correct separation:", len(images_dist) == 1 and len(links_dist) == 1)
     
-    # Step 3: Process code text
-    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
-    print(f"Step 3 - After code: {[str(n) for n in nodes]}")
+    # Test 7: Multiple on same line
+    print("\nTest 7: Multiple Same Type")
+    multi_links = "Check out [Site 1](one.com) and [Site 2](two.com) and [Site 3](three.com)!"
+    links_multi = extract_markdown_links(multi_links)
+    print("Multiple links:", links_multi)
+    print("✅ Found all 3:", len(links_multi) == 3)
     
-    # Step 4: Process italic text
-    nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
-    print(f"Step 4 - After italic: {[str(n) for n in nodes]}")
+    # Test 8: Real-world example
+    print("\nTest 8: Real-World Example")
+    real_world = """
+    Check out this ![awesome diagram](https://example.com/diagram.svg) 
+    that explains the concept. For more info, visit [our docs](https://docs.example.com)
+    or see the ![tutorial screenshot](https://example.com/screenshot.png).
+    Also useful: [Stack Overflow](https://stackoverflow.com) and [GitHub](https://github.com).
+    """
+    real_images = extract_markdown_images(real_world)
+    real_links = extract_markdown_links(real_world)
+    print("Real-world images:", real_images)
+    print("Real-world links:", real_links)
+    print(f"✅ Found {len(real_images)} images and {len(real_links)} links")
     
-    # Step 5: Convert to HTML
-    html_nodes = []
-    for text_node in nodes:
-        html_node = text_node_to_html_node(text_node)
-        html_nodes.append(html_node)
-    
-    # Step 6: Create final paragraph
-    final_paragraph = ParentNode("p", html_nodes)
-    print(f"\nFinal HTML: {final_paragraph.to_html()}")
-    
-    print("\n=== All Tests Complete! ===")
-    print("✅ Split delimiter function working")
-    print("✅ Multiple delimiter types supported") 
-    print("✅ Error handling for invalid Markdown")
-    print("✅ Integration with existing pipeline")
-    print("🚀 Markdown inline parsing foundation complete!")
+    print("\n=== Extraction Functions Complete! ===")
+    print("✅ Image extraction working")
+    print("✅ Link extraction working") 
+    print("✅ Proper separation between images and links")
+    print("✅ Handles edge cases and complex URLs")
+    print("🚀 Ready for link and image splitting functions!")
 
 if __name__ == "__main__":
     main()

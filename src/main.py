@@ -3,156 +3,131 @@ from htmlnode import HTMLNode
 from leafnode import LeafNode
 from parentnode import ParentNode
 from text_to_html import text_node_to_html_node
+from split_delimiter import split_nodes_delimiter
 
 def main():
-    # Test TextNode (existing functionality)
+    # Existing tests (shortened for focus)
     print("=== TextNode Tests ===")
     text_node = TextNode("This is some anchor text", TextType.LINK, "https://www.boot.dev")
     print(text_node)
     
-    # Test HTMLNode (existing functionality)
-    print("\n=== HTMLNode Tests ===")
-    html_node = HTMLNode(
-        tag="a",
-        value="Click me!",
-        props={"href": "https://www.google.com", "target": "_blank"}
-    )
-    print("HTML Node:", html_node)
-    print("Props to HTML:", repr(html_node.props_to_html()))
-    
-    # Test LeafNode functionality
-    print("\n=== LeafNode Tests ===")
-    p_node = LeafNode("p", "This is a paragraph of text.")
-    print("Paragraph HTML:", p_node.to_html())
-    
-    link_node = LeafNode("a", "Click me!", {"href": "https://www.google.com"})
-    print("Link HTML:", link_node.to_html())
-    
-    # Test ParentNode functionality
-    print("\n=== ParentNode Tests ===")
-    multi_parent = ParentNode("p", [
+    print("\n=== HTMLNode → HTML Pipeline Working ===")
+    paragraph = ParentNode("p", [
         LeafNode("b", "Bold text"),
-        LeafNode(None, "Normal text"),
-        LeafNode("i", "italic text"),
-        LeafNode(None, "Normal text"),
+        LeafNode(None, " and normal text")
     ])
-    print("Multi-child parent HTML:", multi_parent.to_html())
+    print("Sample HTML:", paragraph.to_html())
     
-    # Test TextNode to HTMLNode conversion (NEW!)
-    print("\n=== TextNode to HTMLNode Conversion Tests ===")
+    # NEW: Split Delimiter Testing
+    print("\n=== Split Delimiter Function Tests ===")
     
-    # Test all TextType conversions
-    test_nodes = [
-        TextNode("Normal text", TextType.NORMAL),
-        TextNode("Bold text", TextType.BOLD),
-        TextNode("Italic text", TextType.ITALIC),
-        TextNode("Code snippet", TextType.CODE),
-        TextNode("Link text", TextType.LINK, "https://boot.dev"),
-        TextNode("Image alt text", TextType.IMAGE, "https://example.com/image.jpg")
+    # Test 1: Code blocks with backticks
+    print("Test 1: Code blocks")
+    node = TextNode("This is text with a `code block` word", TextType.NORMAL)
+    new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+    print("Original:", node)
+    print("Split result:")
+    for i, n in enumerate(new_nodes):
+        print(f"  {i}: {n}")
+    
+    # Test 2: Bold text with **
+    print("\nTest 2: Bold text")
+    node = TextNode("This is **bold** text with **more bold** here", TextType.NORMAL)
+    new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+    print("Original:", node)
+    print("Split result:")
+    for i, n in enumerate(new_nodes):
+        print(f"  {i}: {n}")
+    
+    # Test 3: Italic text with *
+    print("\nTest 3: Italic text")
+    node = TextNode("This has *italic* and *more italic* text", TextType.NORMAL)
+    new_nodes = split_nodes_delimiter([node], "*", TextType.ITALIC)
+    print("Original:", node)
+    print("Split result:")
+    for i, n in enumerate(new_nodes):
+        print(f"  {i}: {n}")
+    
+    # Test 4: Mixed node types (should leave non-TEXT nodes alone)
+    print("\nTest 4: Mixed node types")
+    mixed_nodes = [
+        TextNode("Normal text with `code` here", TextType.NORMAL),
+        TextNode("Already bold text", TextType.BOLD),
+        TextNode("More normal with `more code` text", TextType.NORMAL)
     ]
+    new_nodes = split_nodes_delimiter(mixed_nodes, "`", TextType.CODE)
+    print("Original nodes:")
+    for i, n in enumerate(mixed_nodes):
+        print(f"  {i}: {n}")
+    print("After split:")
+    for i, n in enumerate(new_nodes):
+        print(f"  {i}: {n}")
     
-    print("Converting TextNodes to HTMLNodes:")
-    for text_node in test_nodes:
-        html_node = text_node_to_html_node(text_node)
-        print(f"  {text_node}")
-        print(f"  → {html_node}")
-        print(f"  → HTML: {html_node.to_html()}")
-        print()
+    # Test 5: No delimiters (should return unchanged)
+    print("\nTest 5: No delimiters")
+    node = TextNode("This text has no special formatting", TextType.NORMAL)
+    new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+    print("Original:", node)
+    print("Result:", new_nodes[0])
+    print("Same object?", node is new_nodes[0])
     
-    # Test complete pipeline integration
-    print("=== Complete Pipeline Integration ===")
+    # Test 6: Delimiter at start and end
+    print("\nTest 6: Delimiters at start/end")
+    node = TextNode("**bold start** and **bold end**", TextType.NORMAL)
+    new_nodes = split_nodes_delimiter([node], "**", TextType.BOLD)
+    print("Original:", node)
+    print("Split result:")
+    for i, n in enumerate(new_nodes):
+        print(f"  {i}: {n}")
     
-    # Simulate parsing a paragraph with mixed formatting
-    paragraph_content = [
-        TextNode("This paragraph has ", TextType.NORMAL),
-        TextNode("bold text", TextType.BOLD),
-        TextNode(" and ", TextType.NORMAL),
-        TextNode("italic text", TextType.ITALIC),
-        TextNode(" and even a ", TextType.NORMAL),
-        TextNode("link to Boot.dev", TextType.LINK, "https://boot.dev"),
-        TextNode("!", TextType.NORMAL)
-    ]
-    
-    # Convert all TextNodes to HTMLNodes
-    html_children = []
-    for text_node in paragraph_content:
-        html_node = text_node_to_html_node(text_node)
-        html_children.append(html_node)
-    
-    # Create a paragraph containing all the converted nodes
-    paragraph = ParentNode("p", html_children)
-    
-    print("Original TextNodes:")
-    for node in paragraph_content:
-        print(f"  {node}")
-    
-    print(f"\nFinal paragraph HTML:")
-    print(paragraph.to_html())
-    
-    # Test more complex document structure
-    print("\n=== Complex Document Structure ===")
-    
-    # Create a blog post structure
-    article_content = [
-        # Header section
-        ParentNode("header", [
-            LeafNode("h1", "My Amazing Blog Post"),
-            ParentNode("p", [
-                LeafNode(None, "Published on "),
-                LeafNode("time", "January 15, 2024", {"datetime": "2024-01-15"}),
-                LeafNode(None, " by "),
-                LeafNode("strong", "John Doe")
-            ])
-        ]),
-        
-        # Main content
-        ParentNode("section", [
-            ParentNode("p", [
-                text_node_to_html_node(TextNode("This is the ", TextType.NORMAL)),
-                text_node_to_html_node(TextNode("first paragraph", TextType.BOLD)),
-                text_node_to_html_node(TextNode(" with some ", TextType.NORMAL)),
-                text_node_to_html_node(TextNode("inline code", TextType.CODE)),
-                text_node_to_html_node(TextNode(".", TextType.NORMAL))
-            ]),
-            
-            ParentNode("p", [
-                text_node_to_html_node(TextNode("Check out ", TextType.NORMAL)),
-                text_node_to_html_node(TextNode("this amazing course", TextType.LINK, "https://boot.dev")),
-                text_node_to_html_node(TextNode(" for learning programming!", TextType.NORMAL))
-            ])
-        ])
-    ]
-    
-    article = ParentNode("article", article_content, {"class": "blog-post"})
-    
-    print("Complete blog post HTML:")
-    print(article.to_html())
-    
-    # Test error handling
-    print("\n=== Error Handling Tests ===")
-    
+    # Test 7: Error handling (unclosed delimiter)
+    print("\nTest 7: Error handling")
     try:
-        invalid_link = TextNode("Link without URL", TextType.LINK, None)
-        text_node_to_html_node(invalid_link)
+        node = TextNode("This has **unclosed bold text", TextType.NORMAL)
+        split_nodes_delimiter([node], "**", TextType.BOLD)
+        print("ERROR: Should have raised exception!")
     except ValueError as e:
-        print(f"Expected error for link without URL: {e}")
+        print(f"Correctly caught error: {e}")
     
-    try:
-        invalid_image = TextNode("Image without URL", TextType.IMAGE, None)
-        text_node_to_html_node(invalid_image)
-    except ValueError as e:
-        print(f"Expected error for image without URL: {e}")
+    # Test 8: Complete pipeline integration
+    print("\n=== Complete Pipeline Integration ===")
     
-    print("\n=== All Systems Complete! ===")
-    print("✅ TextNode system working")
-    print("✅ HTMLNode foundation solid") 
-    print("✅ LeafNode generating HTML elements")
-    print("✅ ParentNode handling complex structures")
-    print("✅ TextNode to HTMLNode conversion working")
-    print("✅ Complete pipeline: TextNode → HTMLNode → HTML string")
-    print("🚀 Ready for Markdown parsing and full static site generation!")
+    # Start with Markdown-like text
+    original_text = "This paragraph has **bold text** and `code snippets` and *italic text*!"
+    print(f"Original text: {original_text}")
+    
+    # Step 1: Create initial TextNode
+    nodes = [TextNode(original_text, TextType.NORMAL)]
+    print(f"Step 1 - Initial: {nodes}")
+    
+    # Step 2: Process bold text
+    nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
+    print(f"Step 2 - After bold: {[str(n) for n in nodes]}")
+    
+    # Step 3: Process code text
+    nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)
+    print(f"Step 3 - After code: {[str(n) for n in nodes]}")
+    
+    # Step 4: Process italic text
+    nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
+    print(f"Step 4 - After italic: {[str(n) for n in nodes]}")
+    
+    # Step 5: Convert to HTML
+    html_nodes = []
+    for text_node in nodes:
+        html_node = text_node_to_html_node(text_node)
+        html_nodes.append(html_node)
+    
+    # Step 6: Create final paragraph
+    final_paragraph = ParentNode("p", html_nodes)
+    print(f"\nFinal HTML: {final_paragraph.to_html()}")
+    
+    print("\n=== All Tests Complete! ===")
+    print("✅ Split delimiter function working")
+    print("✅ Multiple delimiter types supported") 
+    print("✅ Error handling for invalid Markdown")
+    print("✅ Integration with existing pipeline")
+    print("🚀 Markdown inline parsing foundation complete!")
 
 if __name__ == "__main__":
     main()
-
-

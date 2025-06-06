@@ -17,6 +17,7 @@ def text_to_textnodes(text):
     nodes = [TextNode(text, TextType.NORMAL)]
     
     # Process delimiter-based formatting in order of precedence
+    # IMPORTANT: Process ** BEFORE * to handle nested cases correctly
     nodes = split_nodes_delimiter(nodes, "**", TextType.BOLD)
     nodes = split_nodes_delimiter(nodes, "*", TextType.ITALIC)
     nodes = split_nodes_delimiter(nodes, "`", TextType.CODE)

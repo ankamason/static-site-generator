@@ -12,11 +12,12 @@ from text_to_textnodes import text_to_textnodes
 from markdown_to_html import markdown_to_html_node
 from copy_static import copy_static_to_public
 from generate_page import generate_page
+from generate_pages_recursive import generate_pages_recursive
 
 
 def main():
     print("=" * 80)
-    print("🚀 STATIC SITE GENERATOR - COMPLETE WEBSITE GENERATION")
+    print("🚀 STATIC SITE GENERATOR - RECURSIVE WEBSITE GENERATION")
     print("=" * 80)
     
     # Step 1: Clean and prepare the public directory
@@ -41,17 +42,17 @@ def main():
         print(f"❌ Error copying static files: {e}")
         return
     
-    # Step 3: Generate the main page
-    print("\n📄 === STEP 3: GENERATE MAIN PAGE ===")
+    # Step 3: Generate ALL pages recursively
+    print("\n🔄 === STEP 3: RECURSIVE PAGE GENERATION ===")
     try:
-        generate_page(
-            from_path="content/index.md",
+        generate_pages_recursive(
+            dir_path_content="content",
             template_path="template.html", 
-            dest_path="public/index.html"
+            dest_dir_path="public"
         )
-        print("✅ Main page generated successfully")
+        print("✅ All pages generated recursively")
     except Exception as e:
-        print(f"❌ Error generating main page: {e}")
+        print(f"❌ Error during recursive page generation: {e}")
         import traceback
         traceback.print_exc()
         return
@@ -60,21 +61,26 @@ def main():
     print("\n🔍 === STEP 4: VERIFY GENERATED SITE ===")
     try:
         # Check that key files exist
-        required_files = [
+        expected_files = [
             "public/index.html",
+            "public/blog/glorfindel/index.html", 
+            "public/blog/tom/index.html",
+            "public/blog/majesty/index.html",
+            "public/contact/index.html",
             "public/index.css",
             "public/images/tolkien.png"
         ]
         
-        for file_path in required_files:
+        print("📋 Checking expected files:")
+        for file_path in expected_files:
             if os.path.exists(file_path):
                 file_size = os.path.getsize(file_path)
                 print(f"✅ {file_path} ({file_size} bytes)")
             else:
                 print(f"❌ Missing: {file_path}")
         
-        # Show directory structure
-        print(f"\n📊 Generated site structure:")
+        # Show complete directory structure
+        print(f"\n📊 Complete generated site structure:")
         for root, dirs, files in os.walk("public"):
             level = root.replace("public", "").count(os.sep)
             indent = " " * 2 * level
@@ -84,11 +90,22 @@ def main():
                 file_path = os.path.join(root, file)
                 file_size = os.path.getsize(file_path)
                 print(f"{subindent}📄 {file} ({file_size} bytes)")
+        
+        # Count total pages generated
+        html_files = []
+        for root, dirs, files in os.walk("public"):
+            for file in files:
+                if file.endswith('.html'):
+                    html_files.append(os.path.join(root, file))
+        
+        print(f"\n📊 Summary: {len(html_files)} HTML pages generated")
+        for html_file in html_files:
+            print(f"   🌐 {html_file}")
                 
     except Exception as e:
         print(f"❌ Error during verification: {e}")
     
-    # Step 5: Previous system verification (shortened)
+    # Step 5: System verification
     print("\n🔧 === STEP 5: SYSTEM VERIFICATION ===")
     try:
         # Quick markdown conversion test
@@ -104,11 +121,12 @@ def main():
         print(f"❌ System verification failed: {e}")
     
     print("\n" + "=" * 80)
-    print("🎉 STATIC SITE GENERATOR COMPLETE!")
+    print("🎉 RECURSIVE STATIC SITE GENERATOR COMPLETE!")
     print("✅ Static assets copied")
-    print("✅ Main page generated") 
-    print("✅ All systems operational")
+    print("✅ All pages generated recursively") 
+    print("✅ Complete website structure created")
     print("🌐 Ready to serve at http://localhost:8888")
+    print("📝 All pages automatically discovered and generated!")
     print("=" * 80)
 
 

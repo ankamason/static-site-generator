@@ -35,12 +35,12 @@ def copy_files_recursive(source_dir_path, dest_dir_path):
     
     # Step 4: Start the recursive copying
     print(f"📋 Scanning source directory: {source_dir_path}")
-    _copy_directory_contents(source_dir_path, dest_dir_path)
+    copy_directory_contents(source_dir_path, dest_dir_path)
     
     print(f"🎉 Copy operation completed successfully!")
 
 
-def _copy_directory_contents(source_dir, dest_dir):
+def copy_directory_contents(source_dir, dest_dir):
     """
     Helper function to recursively copy directory contents.
     
@@ -86,7 +86,7 @@ def _copy_directory_contents(source_dir, dest_dir):
                 
                 # RECURSION: Process the subdirectory
                 print(f"🔄 Recursing into: {source_item_path}")
-                _copy_directory_contents(source_item_path, dest_item_path)
+                copy_directory_contents(source_item_path, dest_item_path)
                 
             except Exception as e:
                 print(f"❌ Error creating directory {item}: {e}")

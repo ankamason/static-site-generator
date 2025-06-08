@@ -3,7 +3,7 @@ from markdown_to_html import markdown_to_html_node
 from extract_title import extract_title
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath="/"):
     """
     Generate a complete HTML page from markdown content and template.
     
@@ -13,14 +13,17 @@ def generate_page(from_path, template_path, dest_path):
     3. Converts markdown to HTML
     4. Extracts title from markdown
     5. Replaces template placeholders with content and title
-    6. Writes complete HTML page to destination
+    6. Updates all absolute paths to use the correct basepath
+    7. Writes complete HTML page to destination
     
     Args:
         from_path (str): Path to the markdown source file
         template_path (str): Path to the HTML template file
         dest_path (str): Path where the generated HTML page will be written
+        basepath (str): Base URL path for the site (default: "/")
     """
     print(f"📄 Generating page from {from_path} to {dest_path} using {template_path}")
+    print(f"🔗 Using basepath: {basepath}")
     
     # Step 1: Read the markdown file
     print(f"📖 Reading markdown file: {from_path}")
@@ -71,7 +74,20 @@ def generate_page(from_path, template_path, dest_path):
     except Exception as e:
         raise Exception(f"Error replacing template placeholders: {e}")
     
-    # Step 6: Ensure destination directory exists
+    # Step 6: Update absolute paths to use basepath
+    print(f"🔗 Updating absolute paths with basepath: {basepath}")
+    try:
+        # Replace href="/ with href="{basepath}
+        full_html = full_html.replace('href="/', f'href="{basepath}')
+        
+        # Replace src="/ with src="{basepath}  
+        full_html = full_html.replace('src="/', f'src="{basepath}')
+        
+        print(f"✅ Absolute paths updated for basepath: {basepath}")
+    except Exception as e:
+        raise Exception(f"Error updating paths with basepath: {e}")
+    
+    # Step 7: Ensure destination directory exists
     dest_dir = os.path.dirname(dest_path)
     if dest_dir and not os.path.exists(dest_dir):
         print(f"📁 Creating destination directory: {dest_dir}")
@@ -81,7 +97,7 @@ def generate_page(from_path, template_path, dest_path):
         except Exception as e:
             raise Exception(f"Error creating destination directory {dest_dir}: {e}")
     
-    # Step 7: Write the complete HTML page to destination
+    # Step 8: Write the complete HTML page to destination
     print(f"💾 Writing HTML page to: {dest_path}")
     try:
         with open(dest_path, 'w', encoding='utf-8') as f:
